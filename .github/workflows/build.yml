@@ -1,0 +1,174 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Format check
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race ./...
+      - name: Smoke test
+        run: |
+          go build -o md2html .
+          ./md2html | grep -q USAGE
+          ./md2html testdata/sample.md -o out.html -t "Smoke"
+          grep -q "<title>Smoke</title>" out.html
+
+  build:
+    name: ${{ matrix.os }} / ${{ matrix.arch }}
+    needs: test
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: linux,   arch: amd64, runner: ubuntu-latest }
+          - { os: linux,   arch: arm64, runner: ubuntu-24.04-arm }
+          - { os: windows, arch: amd64, runner: windows-latest }
+          - { os: windows, arch: arm64, runner: windows-11-arm }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Work out the version
+        run: |
+          # Tag builds are named after the tag; other runs get the short commit hash.
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "VERSION=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=dev-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+      - name: Build
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          ext=""; [ "$GOOS" = windows ] && ext=".exe"
+          echo "BINARY=md2html$ext" >> "$GITHUB_ENV"
+          go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o "dist/md2html$ext" .
+      - name: Smoke test on the native runner
+        run: |
+          "./dist/$BINARY" --version
+          "./dist/$BINARY" testdata/sample.md -o dist/sample.html
+          test -s dist/sample.html && rm dist/sample.html
+      - name: Package
+        run: |
+          name="md2html-$VERSION-${{ matrix.os }}-${{ matrix.arch }}"
+          cp README.md LICENCE dist/
+          cd dist
+          if [ "${{ matrix.os }}" = windows ]; then
+            pwsh -NoProfile -Command "Compress-Archive -Path '$BINARY','README.md','LICENCE' -DestinationPath '$name.zip'"
+          else
+            tar -czf "$name.tar.gz" "$BINARY" README.md LICENCE
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: md2html-${{ env.VERSION }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  macos-source:
+    # No prebuilt Mac binary (notarisation): ship the source with install.sh instead.
+    name: macOS source package
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Work out the version
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "VERSION=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=dev-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+      - name: Package source with install script
+        run: |
+          name="md2html-$VERSION-macos"
+          mkdir dist
+          git archive --format=tar --prefix="$name/" HEAD > "dist/$name.tar"
+          # Stamp the version so build.sh does not need git.
+          mkdir -p "stage/$name" && echo "$VERSION" > "stage/$name/VERSION"
+          tar -rf "dist/$name.tar" -C stage "$name/VERSION"
+          gzip -9 "dist/$name.tar"
+      - name: Check the package builds and installs
+        run: |
+          mkdir try && tar -xzf dist/*.tar.gz -C try
+          cd try/*/
+          ./install.sh "$PWD/bin"
+          ./bin/md2html --version | grep -q "$VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: md2html-${{ env.VERSION }}-macos
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish release
+    needs: [build, macos-source]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
+      - name: Create the release and attach the downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 \
+            || gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release upload "$TAG" --clobber dist/*.tar.gz dist/*.zip dist/SHA256SUMS

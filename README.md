@@ -35,30 +35,33 @@ CommonMark plus GitHub extras: tables, task lists, strikethrough, autolinks and 
 
 ## Install
 
-### Linux and Windows
+All downloads are on the [Releases](https://github.com/stevelittlefish/md2html/releases) page. `X.Y.Z` below is the version number.
 
-Download the binary for your platform from the [Releases](../../releases) page, rename it to `md2html` (or `md2html.exe`), and put it somewhere on your `PATH`.
+### Linux
 
-| Platform           | File                         |
-|--------------------|------------------------------|
-| Linux x86-64       | `md2html-linux-amd64`        |
-| Linux ARM64        | `md2html-linux-arm64`        |
-| Windows x86-64     | `md2html-windows-amd64.exe`  |
-| Windows ARM64      | `md2html-windows-arm64.exe`  |
-
-On Linux, run `chmod +x` on it after downloading.
-
-### macOS (build from source)
-
-There are no prebuilt Mac binaries, because unsigned downloads are blocked by Gatekeeper. Building locally takes one command:
+Download `md2html-vX.Y.Z-linux-amd64.tar.gz`, or `-linux-arm64` for ARM. Then:
 
 ```sh
-git clone <this repo> md2html && cd md2html
-./build.sh
-sudo mv md2html /usr/local/bin/
+tar -xzf md2html-vX.Y.Z-linux-amd64.tar.gz
+sudo install md2html /usr/local/bin/
 ```
 
-`build.sh` uses your installed Go if it is version 1.24 or newer. Otherwise it downloads the official Go toolchain into `./.toolchain`, which needs no sudo and installs nothing system-wide. Only `curl` and `tar` are required, and both ship with macOS. The same script works on Linux, and `build.ps1` does the same job on Windows.
+### Windows
+
+Download `md2html-vX.Y.Z-windows-amd64.zip`, or `-windows-arm64` for ARM. Unzip it and put `md2html.exe` in a folder on your `PATH`.
+
+### macOS
+
+There is no prebuilt Mac binary, because unsigned downloads get blocked by Gatekeeper. Instead, download `md2html-vX.Y.Z-macos.tar.gz`, which contains the source and an install script, and run:
+
+```sh
+tar -xzf md2html-vX.Y.Z-macos.tar.gz
+cd md2html-vX.Y.Z-macos
+./install.sh                 # builds and installs to /usr/local/bin (asks for sudo)
+./install.sh ~/.local/bin    # or install anywhere you like
+```
+
+`install.sh` runs `build.sh`, which uses your installed Go if it is new enough. If it isn't, `build.sh` downloads the official Go toolchain into the unpacked folder. That needs no sudo and installs nothing system-wide. Only `curl` and `tar` are required, and both ship with macOS. The same steps work from a git clone, and on Linux. On Windows, `build.ps1` builds from source.
 
 ## Development
 
@@ -78,13 +81,19 @@ go run . testdata/sample.md -o /tmp/s.html      # render the visual test page
 
 ### Releasing
 
-Push a tag that starts with `v`:
-
 ```sh
-git tag v1.0.0 && git push origin v1.0.0
+./make_release.sh            # shows the latest tag and suggests the next one
+./make_release.sh v1.2.0     # tags HEAD and pushes the tag
 ```
 
-The GitHub Action runs the tests, cross-compiles the Linux and Windows binaries, and attaches them to a GitHub Release with a `SHA256SUMS` file. Every push to `main` also runs the tests and a smoke test.
+Pushing a `v*` tag triggers the **Build** workflow (`.github/workflows/build.yml`), which:
+
+1. Checks formatting, then runs `go vet` and the tests, plus a smoke test.
+2. Builds Linux and Windows binaries for amd64 and arm64 on native runners, smoke-tests each one, and packages it as a `.tar.gz` or `.zip`.
+3. Packages the source with `install.sh` as `md2html-vX.Y.Z-macos.tar.gz`, then checks that the package builds and installs.
+4. Creates the GitHub Release and attaches all the downloads plus a `SHA256SUMS` file.
+
+Pushes to `main` and pull requests run the same checks and builds, but don't publish anything.
 
 ## Licence
 

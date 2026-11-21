@@ -1,6 +1,6 @@
 # One-command build for Windows. Uses system Go, or downloads it into .\.toolchain.
 $ErrorActionPreference = "Stop"
-$GoVersion = "1.26.4"
+$GoVersion = (Select-String -Path (Join-Path $PSScriptRoot "go.mod") -Pattern "^go (\S+)").Matches[0].Groups[1].Value
 Set-Location $PSScriptRoot
 
 $go = (Get-Command go -ErrorAction SilentlyContinue).Source
@@ -18,9 +18,10 @@ if (-not $go) {
     }
 }
 
-$version = (git describe --tags --always --dirty 2>$null)
+$version = if (Test-Path VERSION) { (Get-Content VERSION -Raw).Trim() } else { (git describe --tags --always --dirty 2>$null) }
 if (-not $version) { $version = "dev" }
 $env:CGO_ENABLED = "0"
+$env:GOTOOLCHAIN = "local"
 & $go build -trimpath -ldflags "-s -w -X main.version=$version" -o md2html.exe .
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "Built $PSScriptRoot\md2html.exe ($version)"
