@@ -43,7 +43,7 @@ Download `md2html-vX.Y.Z-linux-amd64.tar.gz`, or `-linux-arm64` for ARM. Then:
 
 ```sh
 tar -xzf md2html-vX.Y.Z-linux-amd64.tar.gz
-sudo install md2html /usr/local/bin/
+install -D md2html ~/.local/bin/md2html
 ```
 
 ### Windows
@@ -57,8 +57,8 @@ There is no prebuilt Mac binary, because unsigned downloads get blocked by Gatek
 ```sh
 tar -xzf md2html-vX.Y.Z-macos.tar.gz
 cd md2html-vX.Y.Z-macos
-./install.sh                 # builds and installs to /usr/local/bin (asks for sudo)
-./install.sh ~/.local/bin    # or install anywhere you like
+./install.sh                 # builds and installs to ~/.local/bin
+./install.sh /some/dir       # or install anywhere you like
 ```
 
 `install.sh` runs `build.sh`, which uses your installed Go if it is new enough. If it isn't, `build.sh` downloads the official Go toolchain into the unpacked folder. That needs no sudo and installs nothing system-wide. Only `curl` and `tar` are required, and both ship with macOS. The same steps work from a git clone, and on Linux. On Windows, `build.ps1` builds from source.
