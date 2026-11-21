@@ -5,7 +5,7 @@ A small, opinionated command-line tool that turns a Markdown file into a single,
 - **One binary, no dependencies.** Fonts, styles and syntax highlighting are compiled in.
 - **One HTML file out.** No CDN, no external fonts; it works offline and can be emailed or archived as-is.
 - **Fast.** A typical document converts in about 20 ms.
-- **No configuration.** There is one look: an ink-green reading page set in Literata, with a margin table of contents for longer documents.
+- **No configuration.** There is one look, "Field Manual": a deep-navy page set entirely in JetBrains Mono, with cyan accents and a margin table of contents for longer documents.
 
 ## Usage
 
@@ -73,7 +73,7 @@ go run . testdata/sample.md -o /tmp/s.html      # render the visual test page
 | `render.go`              | Markdown → HTML, title and contents extraction, syntax theme |
 | `assets/page.html`       | Page template                                      |
 | `assets/style.css`       | The theme                                          |
-| `assets/fonts/`          | Literata (subset to Latin, woff2) and its licence  |
+| `assets/fonts/`          | JetBrains Mono (subset to Latin, woff2) and its licence  |
 | `testdata/sample.md`     | A document that uses every supported feature       |
 
 ### Releasing
@@ -88,4 +88,4 @@ The GitHub Action runs the tests, cross-compiles the Linux and Windows binaries,
 
 ## Licence
 
-[WTFPL](LICENCE). The bundled Literata font is under the SIL Open Font License; see `assets/fonts/OFL.txt`.
+[WTFPL](LICENCE). The bundled JetBrains Mono font is under the SIL Open Font License; see `assets/fonts/OFL.txt`.

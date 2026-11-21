@@ -26,61 +26,61 @@ var (
 	styleCSS string
 	//go:embed assets/page.html
 	pageTemplate string
-	//go:embed assets/fonts/literata.woff2
+	//go:embed assets/fonts/jetbrains-mono.woff2
 	fontRegular []byte
-	//go:embed assets/fonts/literata-italic.woff2
+	//go:embed assets/fonts/jetbrains-mono-italic.woff2
 	fontItalic []byte
 )
 
 // codeStyle is the syntax theme, built from the page palette.
 var codeStyle = chroma.MustNewStyle("md2html", chroma.StyleEntries{
-	chroma.Background:           "#D8D3C4 bg:#0D1311",
-	chroma.Text:                 "#D8D3C4",
-	chroma.Error:                "#E08A8A",
-	chroma.Comment:              "italic #7C9285",
-	chroma.CommentPreproc:       "noitalic #8DA595",
-	chroma.Keyword:              "#C7A35A",
-	chroma.KeywordType:          "#9FB7B0",
-	chroma.Operator:             "#B8B2A2",
-	chroma.Punctuation:          "#8F8A7D",
-	chroma.Name:                 "#D8D3C4",
-	chroma.NameFunction:         "#ECE6D6",
-	chroma.NameClass:            "#ECE6D6",
-	chroma.NameBuiltin:          "#9FB7B0",
-	chroma.NameTag:              "#C7A35A",
-	chroma.NameAttribute:        "#8DA595",
-	chroma.NameDecorator:        "#8DA595",
-	chroma.LiteralString:        "#C99A8E",
-	chroma.LiteralStringEscape:  "#C7A35A",
-	chroma.LiteralNumber:        "#B9C18F",
-	chroma.GenericDeleted:       "#E08A8A",
-	chroma.GenericInserted:      "#9BC29B",
-	chroma.GenericHeading:       "bold #ECE6D6",
-	chroma.GenericSubheading:    "#C7A35A",
+	chroma.Background:           "#C3CCDC bg:#0A0E17",
+	chroma.Text:                 "#C3CCDC",
+	chroma.Error:                "#E8848E",
+	chroma.Comment:              "italic #6B7891",
+	chroma.CommentPreproc:       "noitalic #8FA3C2",
+	chroma.Keyword:              "#7FC8D8",
+	chroma.KeywordType:          "#A9B7F0",
+	chroma.Operator:             "#AEB8CA",
+	chroma.Punctuation:          "#7D8AA3",
+	chroma.Name:                 "#C3CCDC",
+	chroma.NameFunction:         "#E8EEF8",
+	chroma.NameClass:            "#E8EEF8",
+	chroma.NameBuiltin:          "#A9B7F0",
+	chroma.NameTag:              "#7FC8D8",
+	chroma.NameAttribute:        "#8FA3C2",
+	chroma.NameDecorator:        "#8FA3C2",
+	chroma.LiteralString:        "#B8D99A",
+	chroma.LiteralStringEscape:  "#7FC8D8",
+	chroma.LiteralNumber:        "#E5B97A",
+	chroma.GenericDeleted:       "#E8848E",
+	chroma.GenericInserted:      "#9DD6A0",
+	chroma.GenericHeading:       "bold #E8EEF8",
+	chroma.GenericSubheading:    "#7FC8D8",
 	chroma.GenericEmph:          "italic",
 	chroma.GenericStrong:        "bold",
-	chroma.LiteralStringRegex:   "#C7A35A",
-	chroma.LiteralStringSymbol:  "#B9C18F",
-	chroma.KeywordConstant:      "#B9C18F",
-	chroma.NameVariableMagic:    "#9FB7B0",
-	chroma.LiteralStringDoc:     "italic #7C9285",
-	chroma.CommentSpecial:       "bold italic #8DA595",
-	chroma.GenericPrompt:        "#7C9285",
-	chroma.GenericOutput:        "#B8B2A2",
-	chroma.GenericTraceback:     "#E08A8A",
-	chroma.NameException:        "#E08A8A",
-	chroma.NameLabel:            "#C7A35A",
-	chroma.NameNamespace:        "#9FB7B0",
-	chroma.NameEntity:           "#C7A35A",
-	chroma.NameConstant:         "#B9C18F",
-	chroma.NameOther:            "#D8D3C4",
-	chroma.NameProperty:         "#D8D3C4",
-	chroma.KeywordNamespace:     "#C7A35A",
-	chroma.KeywordDeclaration:   "#C7A35A",
-	chroma.KeywordPseudo:        "#C7A35A",
-	chroma.KeywordReserved:      "#C7A35A",
-	chroma.LiteralStringChar:    "#C99A8E",
-	chroma.LiteralStringHeredoc: "#C99A8E",
+	chroma.LiteralStringRegex:   "#7FC8D8",
+	chroma.LiteralStringSymbol:  "#E5B97A",
+	chroma.KeywordConstant:      "#E5B97A",
+	chroma.NameVariableMagic:    "#A9B7F0",
+	chroma.LiteralStringDoc:     "italic #6B7891",
+	chroma.CommentSpecial:       "bold italic #8FA3C2",
+	chroma.GenericPrompt:        "#6B7891",
+	chroma.GenericOutput:        "#AEB8CA",
+	chroma.GenericTraceback:     "#E8848E",
+	chroma.NameException:        "#E8848E",
+	chroma.NameLabel:            "#7FC8D8",
+	chroma.NameNamespace:        "#A9B7F0",
+	chroma.NameEntity:           "#7FC8D8",
+	chroma.NameConstant:         "#E5B97A",
+	chroma.NameOther:            "#C3CCDC",
+	chroma.NameProperty:         "#C3CCDC",
+	chroma.KeywordNamespace:     "#7FC8D8",
+	chroma.KeywordDeclaration:   "#7FC8D8",
+	chroma.KeywordPseudo:        "#7FC8D8",
+	chroma.KeywordReserved:      "#7FC8D8",
+	chroma.LiteralStringChar:    "#B8D99A",
+	chroma.LiteralStringHeredoc: "#B8D99A",
 })
 
 var md = goldmark.New(
@@ -226,6 +226,6 @@ func (r *headingRenderer) render(w util.BufWriter, src []byte, node ast.Node, en
 }
 
 func fontFace(b *strings.Builder, style string, data []byte) {
-	fmt.Fprintf(b, "@font-face{font-family:\"Literata\";font-style:%s;font-weight:400 700;font-display:swap;"+
+	fmt.Fprintf(b, "@font-face{font-family:\"JetBrains Mono\";font-style:%s;font-weight:400 700;font-display:swap;"+
 		"src:url(data:font/woff2;base64,%s) format(\"woff2\")}\n", style, base64.StdEncoding.EncodeToString(data))
 }
