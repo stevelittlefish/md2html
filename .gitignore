@@ -1,0 +1,6 @@
+/md2html
+/md2html.exe
+/.toolchain/
+/dist/
+*.html
+!assets/page.html

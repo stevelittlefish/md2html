@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="generator" content="md2html">
+<title>{{.Title}}</title>
+<style>{{.CSS}}</style>
+</head>
+<body{{if .TOC}} class="has-toc"{{end}}>
+<div class="layout">
+{{- if .TOC}}
+<nav class="toc" aria-label="Contents">
+  <details open>
+    <summary>Contents</summary>
+    <ol>
+    {{- range .TOC}}
+      <li><a href="#{{.ID}}">{{.Text}}</a></li>
+    {{- end}}
+    </ol>
+  </details>
+</nav>
+{{- end}}
+<main class="doc">
+{{- if .ShowHeader}}
+<h1>{{.Title}}</h1>
+{{- end}}
+{{.Body}}
+</main>
+</div>
+{{- if .TOC}}
+<script>
+(function () {
+  var links = {};
+  document.querySelectorAll('.toc a').forEach(function (a) {
+    links[decodeURIComponent(a.hash.slice(1))] = a;
+  });
+  var heads = Array.prototype.filter.call(document.querySelectorAll('.doc h2[id]'), function (h) { return links[h.id]; });
+  if (!heads.length || !('IntersectionObserver' in window)) return;
+  var current;
+  function update() {
+    var active = heads[0];
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i].getBoundingClientRect().top < window.innerHeight * 0.3) active = heads[i];
+    }
+    if (active === current) return;
+    if (current) links[current.id].removeAttribute('aria-current');
+    links[active.id].setAttribute('aria-current', 'true');
+    current = active;
+  }
+  var io = new IntersectionObserver(update, { rootMargin: '0px 0px -70% 0px' });
+  heads.forEach(function (h) { io.observe(h); });
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+  if (window.matchMedia('(max-width: 1099px)').matches) {
+    var d = document.querySelector('.toc details');
+    if (d) d.open = false;
+  }
+})();
+</script>
+{{- end}}
+</body>
+</html>
