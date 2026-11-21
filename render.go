@@ -26,10 +26,14 @@ var (
 	styleCSS string
 	//go:embed assets/page.html
 	pageTemplate string
+	//go:embed assets/fonts/ibm-plex-sans.woff2
+	fontSans []byte
+	//go:embed assets/fonts/ibm-plex-sans-italic.woff2
+	fontSansItalic []byte
 	//go:embed assets/fonts/jetbrains-mono.woff2
-	fontRegular []byte
+	fontMono []byte
 	//go:embed assets/fonts/jetbrains-mono-italic.woff2
-	fontItalic []byte
+	fontMonoItalic []byte
 )
 
 // codeStyle is the syntax theme, built from the page palette.
@@ -146,8 +150,10 @@ func Render(src []byte, titleOverride, fallbackTitle string) ([]byte, error) {
 	}
 
 	var css strings.Builder
-	fontFace(&css, "normal", fontRegular)
-	fontFace(&css, "italic", fontItalic)
+	fontFace(&css, "IBM Plex Sans", "normal", fontSans)
+	fontFace(&css, "IBM Plex Sans", "italic", fontSansItalic)
+	fontFace(&css, "JetBrains Mono", "normal", fontMono)
+	fontFace(&css, "JetBrains Mono", "italic", fontMonoItalic)
 	css.WriteString(styleCSS)
 	if err := chromahtml.New(chromahtml.WithClasses(true)).WriteCSS(&css, codeStyle); err != nil {
 		return nil, err
@@ -225,7 +231,7 @@ func (r *headingRenderer) render(w util.BufWriter, src []byte, node ast.Node, en
 	return ast.WalkContinue, nil
 }
 
-func fontFace(b *strings.Builder, style string, data []byte) {
-	fmt.Fprintf(b, "@font-face{font-family:\"JetBrains Mono\";font-style:%s;font-weight:400 700;font-display:swap;"+
-		"src:url(data:font/woff2;base64,%s) format(\"woff2\")}\n", style, base64.StdEncoding.EncodeToString(data))
+func fontFace(b *strings.Builder, family, style string, data []byte) {
+	fmt.Fprintf(b, "@font-face{font-family:\"%s\";font-style:%s;font-weight:400 700;font-display:swap;"+
+		"src:url(data:font/woff2;base64,%s) format(\"woff2\")}\n", family, style, base64.StdEncoding.EncodeToString(data))
 }
